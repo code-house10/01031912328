@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>جارٍ الاتصال…</title>
+  <style>
+    body{font-family:system-ui,Arial; margin:0; display:flex; min-height:100vh; align-items:center; justify-content:center; padding:20px; text-align:center;}
+    .box{max-width:520px}
+    .btn{display:inline-block; margin-top:12px; padding:12px 18px; border-radius:999px; text-decoration:none; border:1px solid #000;}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>جارٍ فتح الاتصال الآن…</h2>
+    <p>إذا لم يفتح الاتصال تلقائيًا، اضغط الزر بالأسفل.</p>
+    <a class="btn" id="callBtn" href="tel:01031912328">اتصل الآن 01031912328</a>
+  </div>
+
+<script>
+(function () {
+  // رقم الاتصال (يفضل أيضًا تجربة صيغة دولية على بعض الأجهزة: tel:+201031912328)
+  const PHONE_TEL = "tel:01031912328";
+  const REDIRECT_DELAY_MS = 800;
+
+  // ضع رابط Web App الخاص بـ Google Apps Script هنا (اختياري)
+  // مثال: https://script.google.com/macros/s/XXXX/exec
+  const APPS_SCRIPT_ENDPOINT = ""; // اتركه فارغًا لو مش هتبعت للشيت الآن
+
+  // التقط gclid من الـ URL
+  const params = new URLSearchParams(window.location.search);
+  const gclid = params.get("gclid") || "";
+
+  // وقت النقرة (ISO) — تقدر تخزنه في الشيت، وتحوله لاحقًا لصيغة Google Ads عند الرفع
+  const clickTimeISO = new Date().toISOString();
+
+  // بيانات إضافية اختيارية (لو حابب تسجلها)
+  const payload = {
+    gclid: gclid,
+    click_time: clickTimeISO,
+    page: location.href,
+    user_agent: navigator.userAgent
+  };
+
+  // ابعت البيانات للشيت (اختياري)
+  if (APPS_SCRIPT_ENDPOINT) {
+    try {
+      fetch(APPS_SCRIPT_ENDPOINT, {
+        method: "POST",
+        mode: "no-cors", // مهم مع Apps Script غالبًا
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {
+      // نتجاهل الأخطاء عشان ما نعطلش الاتصال
+    }
+  }
+
+  // حدّث زر الاتصال للتأكيد
+  const btn = document.getElementById("callBtn");
+  btn.href = PHONE_TEL;
+
+  // التحويل للاتصال خلال 0.8 ثانية
+  setTimeout(() => {
+    window.location.href = PHONE_TEL;
+  }, REDIRECT_DELAY_MS);
+
+})();
+</script>
+</body>
+</html>
