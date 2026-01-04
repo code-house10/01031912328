@@ -6,7 +6,7 @@
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
     j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-N97WSGTF');</script>
+    })(window,document,'script','dataLayer','GTM-MGNDXV94');</script>
     <!-- End Google Tag Manager -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -66,7 +66,7 @@
 <body class="bg-gray-100">
 
     <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N97WSGTF"
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MGNDXV94"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
 
@@ -695,57 +695,67 @@
         slideInterval = setInterval(nextSlide, 5000);
     });
     </script>
-	
-	<script>
-(function () {
-  // رقم الاتصال (يفضل أيضًا تجربة صيغة دولية على بعض الأجهزة: tel:+201031912328)
-  const PHONE_TEL = "tel:01031912328";
-  const REDIRECT_DELAY_MS = 800;
 
-  // ضع رابط Web App الخاص بـ Google Apps Script هنا (اختياري)
-  // مثال: https://script.google.com/macros/s/XXXX/exec
-  const APPS_SCRIPT_ENDPOINT = ""; // اتركه فارغًا لو مش هتبعت للشيت الآن
+    <!-- ✅ Call Bridge (Capture IDs → Send to Google Sheet → Attempt Auto Dial + Fallback Modal) -->
+    <script>
+    (function () {
+      const PHONE_NUMBER = "01031912328";
+      const TEL_LINK = "tel:01031912328";
+      const REDIRECT_DELAY = 800; // 0.8s
 
-  // التقط gclid من الـ URL
-  const params = new URLSearchParams(window.location.search);
-  const gclid = params.get("gclid") || "";
+      // Safety gate:
+      // Auto-dial / auto-open modal ONLY when ?autocall=1 is present (so SEO visitors are safe)
+      const params = new URLSearchParams(window.location.search);
+      const autoCallFlag = params.get("autocall") === "1";
+      if (!autoCallFlag) return;
 
-  // وقت النقرة (ISO) — تقدر تخزنه في الشيت، وتحوله لاحقًا لصيغة Google Ads عند الرفع
-  const clickTimeISO = new Date().toISOString();
+      // Accept Google identifiers (gclid preferred for Offline Conversions)
+      const gclid  = params.get("gclid")  || "";
+      const wbraid = params.get("wbraid") || "";
+      const gbraid = params.get("gbraid") || "";
 
-  // بيانات إضافية اختيارية (لو حابب تسجلها)
-  const payload = {
-    gclid: gclid,
-    click_time: clickTimeISO,
-    page: location.href,
-    user_agent: navigator.userAgent
-  };
+      const clickTimeISO = new Date().toISOString();
 
-  // ابعت البيانات للشيت (اختياري)
-  if (APPS_SCRIPT_ENDPOINT) {
-    try {
-      fetch(APPS_SCRIPT_ENDPOINT, {
-        method: "POST",
-        mode: "no-cors", // مهم مع Apps Script غالبًا
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-    } catch (e) {
-      // نتجاهل الأخطاء عشان ما نعطلش الاتصال
-    }
-  }
+      const payload = {
+        gclid:  gclid.toString().trim(),
+        wbraid: wbraid.toString().trim(),
+        gbraid: gbraid.toString().trim(),
+        click_time: clickTimeISO,
+        phone: PHONE_NUMBER,
+        page: window.location.href,
+        user_agent: navigator.userAgent,
+        referrer: document.referrer || ""
+      };
 
-  // حدّث زر الاتصال للتأكيد
-  const btn = document.getElementById("callBtn");
-  btn.href = PHONE_TEL;
+      // Send to Google Sheet via Apps Script Web App (even if gclid is missing; you'll still see traffic)
+      try {
+        fetch("https://script.google.com/macros/s/AKfycbzCWyV0vbtoYWmY5DHp32qVVqR7ITi1OPPcXgl7o9OXfkF6qcZ8Fxf9GAMX_19TPNHAxw/exec", {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } catch (e) {}
 
-  // التحويل للاتصال خلال 0.8 ثانية
-  setTimeout(() => {
-    window.location.href = PHONE_TEL;
-  }, REDIRECT_DELAY_MS);
+      // Fallback: open your existing conversion modal (user click is required on some browsers)
+      function openFallbackModal() {
+        const directCallModal = document.getElementById("direct-call-modal");
+        if (!directCallModal) return;
+        directCallModal.classList.remove("hidden");
+        // Ensure the big button points to the right number
+        const btn = directCallModal.querySelector("a.google-conversion-button");
+        if (btn) btn.setAttribute("href", TEL_LINK);
+      }
 
-})();
-</script>
-	
+      // Attempt auto-dial after 0.8s
+      setTimeout(function () {
+        // Many browsers block automatic tel: navigation without a user gesture.
+        // We'll try, then immediately show the fallback modal so the user can tap to call.
+        try { window.location.href = TEL_LINK; } catch (e) {}
+        openFallbackModal();
+      }, REDIRECT_DELAY);
+    })();
+    </script>
+
 </body>
 </html>
